@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="说吧">
+<meta name="theme-color" content="#f6f1e7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>说吧 Shuō ba — Chinese Speaking Coach</title>
+<style>
+:root{
+  --paper:#f6f1e7; --card:#fffdf8; --ink:#231f1a; --muted:#7a7166; --line:#e5dccb;
+  --seal:#b8322a; --seal-soft:#f3dcd6; --ok:#2f7d4f; --ok-soft:#dcefe2; --warn:#b06d00;
+  --t1:#d1342b; --t2:#e08a00; --t3:#2f8a46; --t4:#2a62c9; --t5:#8a8580;
+  --zh:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+.zh{font-family:var(--zh)}
+header{padding:calc(10px + var(--safe-t)) 16px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:var(--paper)}
+.brand{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.seal{width:34px;height:34px;border-radius:7px;background:var(--seal);color:#fff;display:grid;place-items:center;font-family:var(--zh);font-weight:700;font-size:15px;letter-spacing:-1px;transform:rotate(-3deg)}
+.brand b{font-size:17px}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.pill{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600}
+main{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding:12px 14px 20px}
+.view.on{display:block}
+#view-talk{display:none;flex-direction:column;padding:0}
+#view-talk.on{display:flex}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 14px;scrollbar-width:none;flex-shrink:0}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13.5px;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#chat{flex:1;overflow-y:auto;padding:4px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:300px;padding:20px 0}
+.empty .big{font-family:var(--zh);font-size:44px;color:var(--ink);margin-bottom:6px}
+.btn{border:none;background:var(--ink);color:var(--paper);border-radius:12px;padding:11px 16px;font-weight:600;font-size:15px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.red{background:var(--seal);color:#fff}
+.btn:disabled{opacity:.45}
+.msg{max-width:92%;border-radius:16px;padding:12px 14px;background:var(--card);border:1px solid var(--line);position:relative}
+.msg.tutor{align-self:flex-start;border-top-left-radius:4px}
+.msg.me{align-self:flex-end;border-top-right-radius:4px;background:#fbf7ee}
+.msg .hz{font-family:var(--zh);font-size:22px;line-height:1.45}
+.msg.me .hz{font-size:19px}
+.py{font-size:14.5px;margin-top:3px;line-height:1.5}
+.en{font-size:14px;color:var(--muted);margin-top:4px}
+.hide-py .py.toggle{display:none}.hide-en .en.toggle{display:none}
+.t1{color:var(--t1)}.t2{color:var(--t2)}.t3{color:var(--t3)}.t4{color:var(--t4)}.t5{color:var(--t5)}
+.row{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.mini{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 10px;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.score{font-weight:700;font-size:13px;border-radius:999px;padding:3px 9px}
+.score.hi{background:var(--ok-soft);color:var(--ok)}.score.mid{background:#fbecd0;color:var(--warn)}.score.lo{background:var(--seal-soft);color:var(--seal)}
+.label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:10px}
+.better{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--ok-soft)}
+.better .hz{font-size:18px}
+.tips{margin:6px 0 0;padding-left:18px;font-size:14px}
+.tips li{margin:2px 0}
+.syls{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.syl{text-align:center;min-width:40px;padding:4px 4px 3px;border-radius:8px;border:1px solid transparent}
+.syl.bad{border-color:var(--seal);background:var(--seal-soft)}
+.syl .c{font-family:var(--zh);font-size:20px;line-height:1.2}
+.syl .p{font-size:12.5px;font-weight:600}
+.syl .h{font-size:11px;color:var(--seal);text-decoration:line-through}
+.syl svg{display:block;margin:2px auto 0}
+canvas.pitch{width:100%;height:64px;display:block;margin-top:6px;border-radius:8px;background:var(--paper)}
+.pitchcap{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.typing span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);margin-right:4px;animation:b 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.composer{flex-shrink:0;border-top:1px solid var(--line);background:var(--paper);padding:10px 14px 10px;display:flex;align-items:center;gap:10px}
+.composer input{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:11px 14px;font-size:15px}
+.mic{width:64px;height:64px;border-radius:50%;border:none;background:var(--seal);color:#fff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 14px rgba(184,50,42,.3);position:relative}
+.mic svg{width:28px;height:28px}
+.mic.rec{background:var(--ink);animation:pulse 1.2s infinite}
+.mic.busy{opacity:.55}
+.mic .tm{position:absolute;bottom:-17px;font-size:11px;color:var(--muted);font-weight:600}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(35,31,26,.35)}70%{box-shadow:0 0 0 14px rgba(35,31,26,0)}100%{box-shadow:0 0 0 0 rgba(35,31,26,0)}}
+.send{border:none;background:var(--card);border:1px solid var(--line);width:44px;height:44px;border-radius:50%;flex-shrink:0;display:grid;place-items:center}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding-bottom:var(--safe-b)}
+nav button{flex:1;border:none;background:none;padding:8px 0 9px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button .ic{font-family:var(--zh);font-size:19px;line-height:1.1}
+nav button.on{color:var(--seal);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 4px;font-size:16px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 10px;line-height:1.45}
+.field{margin:12px 0}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.field input[type=text],.field input[type=password],.field select{width:100%;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 12px;font-size:15px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:15px}
+.switch input{width:20px;height:20px;accent-color:var(--seal)}
+.target .hz{font-family:var(--zh);font-size:30px;line-height:1.35}
+.target .py{font-size:17px}
+.wlist{display:flex;flex-direction:column}
+.w{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.w:last-child{border-bottom:none}
+.w .hz{font-family:var(--zh);font-size:22px;min-width:56px}
+.w .meta{flex:1;min-width:0}
+.w .meta .py{margin:0;font-size:14px}
+.w .meta .en{margin:0;font-size:13px}
+.x{border:none;background:none;color:var(--muted);font-size:18px;padding:4px 6px}
+.tonechips{display:flex;flex-wrap:wrap;gap:6px}
+.tonechips span{border:1px solid var(--line);border-radius:8px;padding:4px 8px;font-size:14px;font-weight:600;background:var(--paper)}
+.tonechips small{color:var(--muted);font-weight:400;margin-left:3px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;margin-top:6px}
+#toast{position:fixed;left:50%;bottom:calc(150px + var(--safe-b));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:12px;font-size:14px;max-width:88%;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;text-align:center}
+#toast.on{opacity:1}
+.note{font-size:12.5px;color:var(--muted);line-height:1.45}
+a{color:var(--seal)}
+@media (min-width:700px){body{max-width:560px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="seal">说吧</div><div><b>Shuō ba</b><small id="hdrSub">Speaking coach</small></div></div>
+  <select class="pill" id="levelSel" aria-label="HSK level">
+    <option value="1">HSK 1</option><option value="2">HSK 2</option><option value="3">HSK 3</option>
+    <option value="4">HSK 4</option><option value="5">HSK 5</option><option value="6">HSK 6</option><option value="7">HSK 7–9</option>
+  </select>
+</header>
+
+<main>
+  <!-- TALK -->
+  <section class="view on" id="view-talk">
+    <div class="chips" id="scenarios"></div>
+    <div id="chat"></div>
+    <div class="composer">
+      <input id="textIn" placeholder="Type in 中文, pinyin or English…" enterkeyhint="send" autocomplete="off">
+      <button class="send" id="sendBtn" aria-label="Send typed message"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="mic" id="micTalk" aria-label="Tap to speak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span class="tm"></span></button>
+    </div>
+  </section>
+
+  <!-- DRILL -->
+  <section class="view" id="view-drill">
+    <div class="card">
+      <h3>Tone drill</h3>
+      <p class="sub">Listen, then say the sentence. You'll get a syllable-by-syllable tone check plus a graph of your own pitch. Drills lean toward tones you've been missing.</p>
+      <div class="row"><button class="btn" id="newDrill">New sentence</button><button class="btn ghost" id="weakDrill">Drill my weak words</button></div>
+    </div>
+    <div class="card target" id="drillCard" style="display:none">
+      <div class="hz" id="dHz"></div>
+      <div class="py" id="dPy"></div>
+      <div class="en" id="dEn"></div>
+      <div class="note" id="dFocus" style="margin-top:6px"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="mini" id="dPlay">🔊 Normal</button><button class="mini" id="dSlow">🐢 Slow</button>
+      </div>
+      <div style="display:flex;justify-content:center;margin:18px 0 10px">
+        <button class="mic" id="micDrill" aria-label="Tap to record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span class="tm"></span></button>
+      </div>
+      <div id="dResult"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:14px">Tone colours</h3>
+      <div class="legend"><span class="t1">● 1st ā high-flat</span><span class="t2">● 2nd á rising</span><span class="t3">● 3rd ǎ dip</span><span class="t4">● 4th à falling</span><span class="t5">● neutral</span></div>
+    </div>
+  </section>
+
+  <!-- WORDS -->
+  <section class="view" id="view-words">
+    <div class="card">
+      <h3>Tones to work on</h3>
+      <p class="sub">Syllables you've mispronounced most. The tutor and drills use this list.</p>
+      <div class="tonechips" id="toneErrs"></div>
+    </div>
+    <div class="card">
+      <h3>My words <span id="wCount" class="note"></span></h3>
+      <p class="sub">New words from your conversations. Tap 🔊 to hear one. The tutor will keep reusing them.</p>
+      <div class="wlist" id="wlist"></div>
+    </div>
+    <div class="card">
+      <h3>What the tutor remembers</h3>
+      <p class="sub">A short summary is saved each time you tap "End &amp; save session" in Settings.</p>
+      <div id="memList" class="note"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h3>Google Gemini API key</h3>
+      <p class="sub">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. It's stored only in this browser on this device and sent only to Google.</p>
+      <div class="field"><input type="password" id="keyIn" placeholder="AIza…" autocomplete="off"></div>
+      <div class="field"><label>Model</label><input type="text" id="modelIn" list="models"><datalist id="models"><option value="gemini-3.8-flash"><option value="gemini-3.5-flash"><option value="gemini-3.5-flash-lite"></datalist>
+      <p class="note" style="margin-top:6px">Must be a model that accepts audio. If you get a "model not found" error, paste a current model name from Google AI Studio.</p></div>
+      <button class="btn" id="saveKey">Save</button> <button class="btn ghost" id="testKey">Test</button>
+    </div>
+    <div class="card">
+      <h3>Voice &amp; display</h3>
+      <div class="field"><label>Tutor speaking speed: <span id="rateVal"></span></label><input type="range" id="rateIn" min="0.5" max="1.2" step="0.05" style="width:100%;accent-color:var(--seal)"></div>
+      <label class="switch">Speak tutor replies automatically<input type="checkbox" id="autoIn"></label>
+      <label class="switch">Show pinyin<input type="checkbox" id="pyIn"></label>
+      <label class="switch">Show English<input type="checkbox" id="enIn"></label>
+      <label class="switch">Use Google Cloud voice (more natural)<input type="checkbox" id="cloudIn"></label>
+      <div class="field" id="voiceField"><label>Cloud voice name</label><input type="text" id="voiceIn" placeholder="cmn-CN-Wavenet-A">
+      <p class="note" style="margin-top:6px">Needs the "Cloud Text-to-Speech API" turned on for the same Google project as your key. If it fails, the app falls back to your phone's built-in Chinese voice.</p></div>
+    </div>
+    <div class="card">
+      <h3>Session</h3>
+      <p class="sub">Ending a session saves a short summary (what you practised, what to review) so the tutor remembers you next time, then clears the chat.</p>
+      <button class="btn red" id="endSess">End &amp; save session</button>
+      <button class="btn ghost" id="clearChat">Clear chat only</button>
+    </div>
+    <div class="card">
+      <h3>Put it on your phone</h3>
+      <p class="sub"><b>iPhone:</b> open this page in Safari → Share → <i>Add to Home Screen</i>.<br><b>Android:</b> open in Chrome → ⋮ menu → <i>Add to Home screen</i>.<br>Allow microphone access when asked.</p>
+      <button class="btn ghost" id="resetAll" style="color:var(--seal)">Erase all data on this device</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-v="talk"><span class="ic">聊</span>Talk</button>
+  <button data-v="drill"><span class="ic">练</span>Tone drill</button>
+  <button data-v="words"><span class="ic">词</span>Words</button>
+  <button data-v="settings"><span class="ic">设</span>Settings</button>
+</nav>
+<div id="toast"></div>
+<audio id="player" playsinline></audio>
+
+<script>
+"use strict";
+/* ---------- storage ---------- */
+const P='shuoba_';
+const store={
+  get(k,d){try{const v=localStorage.getItem(P+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(P+k,JSON.stringify(v))}catch(e){}}
+};
+const S={
+  key:store.get('key',''), model:store.get('model','gemini-3.8-flash'),
+  level:store.get('level','2'), scenario:store.get('scenario','free'),
+  showPy:store.get('showPy',true), showEn:store.get('showEn',true),
+  rate:store.get('rate',0.85), auto:store.get('auto',true),
+  cloud:store.get('cloud',false), voice:store.get('voice','cmn-CN-Wavenet-A'),
+  vocab:store.get('vocab',{}), toneErr:store.get('toneErr',{}),
+  memory:store.get('memory',[]), history:store.get('history',[]), msgs:store.get('msgs',[])
+};
+const save=(...ks)=>ks.forEach(k=>store.set(k,S[k]));
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastT; function toast(m,ms=2800){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms)}
+
+/* ---------- levels & scenarios ---------- */
+const LEVELS={
+ '1':'HSK 1 (~150–300 words). Very short, simple sentences (≤8 characters). Basic greetings, numbers, family, time, yes/no and 吗 questions.',
+ '2':'HSK 2 (~300–500 words). Short sentences, simple past with 了, 在 progressive, comparisons with 比, everyday topics.',
+ '3':'HSK 3 (~600–1000 words). Everyday conversation, 把 sentences, resultative complements, simple reasons/opinions.',
+ '4':'HSK 4 (~1200 words). Broader topics, opinions, connectors like 虽然…但是, 不但…而且, 如果…就.',
+ '5':'HSK 5 (~2500 words). Natural conversational Mandarin, idiomatic phrases, abstract topics.',
+ '6':'HSK 6 (~5000 words). Fluent, nuanced, near-native speech with chengyu where natural.',
+ '7':'HSK 7–9 (advanced). Fully native-speed, colloquial and formal registers, idioms, current affairs.'
+};
+const SCEN=[
+ ['free','💬 Free chat','casual free conversation about the learner\'s day and interests'],
+ ['intro','👋 Meeting someone','meeting someone new: names, where you\'re from, job, hobbies'],
+ ['food','🥟 Ordering food','a waiter at a Chinese restaurant taking the learner\'s order'],
+ ['taxi','🚕 Taxi & directions','a taxi driver / passer-by giving and asking for directions'],
+ ['shop','🛍️ Shopping','a shopkeeper at a market; prices, sizes, bargaining'],
+ ['hotel','🏨 Hotel & travel','a hotel front desk and travel planning'],
+ ['work','💼 At work','a coworker chatting about work, meetings and schedules'],
+ ['friends','🎉 Weekend plans','a friend making weekend plans'],
+ ['doctor','🏥 At the doctor','a doctor asking about symptoms']
+];
+
+/* ---------- pinyin tone colouring ---------- */
+const TONE_CH={'1':'āēīōūǖĀĒĪŌŪǕ','2':'áéíóúǘÁÉÍÓÚǗ','3':'ǎěǐǒǔǚǍĚǏǑǓǙ','4':'àèìòùǜÀÈÌÒÙǛ'};
+function toneOf(s){for(const t in TONE_CH){for(const c of TONE_CH[t]) if(s.includes(c)) return t} return /[a-zü]/i.test(s)?'5':''}
+const V='aeiouüvāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙ';
+const SYL=new RegExp(`(?:zh|ch|sh|[bpmfdtnlgkhjqxzcsryw])?[${V}]+(?:ng(?![${V}])|n(?![${V}])|r(?![${V}]))?`,'gi');
+function colorPy(py){ // colour each pinyin syllable by its tone
+  return esc(py).replace(SYL,m=>{const t=toneOf(m);return t?`<span class="t${t}">${m}</span>`:m});
+}
+const CONTOUR={'1':'M3 4 L23 4','2':'M3 15 L23 3','3':'M3 9 Q11 20 23 5','4':'M3 3 L23 17','5':'M11 11 L15 11'};
+function toneSvg(t,col){return `<svg width="26" height="20" viewBox="0 0 26 20"><path d="${CONTOUR[t]||CONTOUR['5']}" fill="none" stroke="var(--t${t||5})" stroke-width="2.4" stroke-linecap="round"/></svg>`}
+
+/* ---------- Gemini ---------- */
+function parseJSON(t){t=(t||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'');try{return JSON.parse(t)}catch(e){const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error('Could not read the tutor\'s reply. Try again.')}}
+async function gemini({system,contents,json=true,temp=0.7}){
+  if(!S.key){go('settings');throw new Error('Add your Gemini API key in Settings first.')}
+  const body={contents,generationConfig:{temperature:temp}};
+  if(system) body.systemInstruction={parts:[{text:system}]};
+  if(json) body.generationConfig.responseMimeType='application/json';
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(S.model.trim())}:generateContent`,{
+    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.key.trim()},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d?.error?.message||('Google API error '+r.status));
+  const text=(d.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+  if(!text) throw new Error('Empty reply ('+(d.candidates?.[0]?.finishReason||d.promptFeedback?.blockReason||'unknown')+').');
+  return json?parseJSON(text):text;
+}
+
+function profile(){
+  const words=Object.entries(S.vocab).sort((a,b)=>b[1].added-a[1].added).slice(0,40).map(([h,v])=>`${h}(${v.pinyin})`).join(', ')||'none yet';
+  const tones=topToneErr(8).map(([s,n])=>`${s}×${n}`).join(', ')||'none yet';
+  const mem=S.memory.slice(-5).map(m=>'- '+m.text).join('\n')||'- (first session)';
+  return `LEARNER PROFILE (personalise with this; recycle their words naturally):\n- Words they're learning: ${words}\n- Syllables they often get wrong (expected form × times): ${tones}\n- Notes from past sessions:\n${mem}`;
+}
+const TONE_RULES=`TONE JUDGING: Listen to the learner's ACTUAL audio. Transcribe exactly what you heard, not what they meant. For every syllable compare the tone they produced to the expected SURFACE tone, applying tone sandhi (3rd+3rd → 2nd+3rd e.g. nǐ hǎo → ní hǎo; 不 → bú before a 4th tone; 一 → yí before 4th, yì before 1st/2nd/3rd; neutral tones like 的/了/吗/子). Be strict but fair: native-like contours = ok; flat 2nd tones, 4th tones that don't fall, or 3rd tones that rise instead of dipping low = not ok. If audio is unclear, say so in tips rather than guessing.`;
+
+function talkSystem(){
+  const sc=SCEN.find(s=>s[0]===S.scenario)||SCEN[0];
+  return `You are 小林 (Xiǎo Lín), a warm, encouraging native Mandarin tutor having a SPOKEN conversation with an English-speaking learner.
+LEVEL: ${LEVELS[S.level]} Keep your Chinese within this level. Use at most ONE word above level per reply, and list it in new_vocab.
+SCENARIO: role-play ${sc[2]}. Stay in role, keep it moving, and usually end with a short question so the learner has to answer.
+STYLE: 1–2 short spoken-style sentences, Simplified characters. Never lecture inside reply_hanzi; feedback goes in the feedback fields.
+If the learner uses English or gets stuck, put the Chinese they should have said in better_hanzi, and gently continue.
+${TONE_RULES}
+${profile()}
+Reply with ONLY this JSON:
+{"heard_hanzi":"what they actually said, in characters ('' if none)","heard_pinyin":"pinyin with tone marks as THEY pronounced it",
+"syllables":[{"hanzi":"你","expected":"ní","heard":"nǐ","ok":true}],
+"tone_score":0-100 or null,
+"better_hanzi":"more correct/natural version, or '' if already good","better_pinyin":"",
+"tips":["max 2 short English tips about their biggest tone/pronunciation issues"],
+"grammar":"one short English note about grammar/word choice, or ''",
+"reply_hanzi":"your next line","reply_pinyin":"tone-marked pinyin, words separated by spaces","reply_english":"translation",
+"new_vocab":[{"hanzi":"","pinyin":"","english":""}]}
+For typed (non-audio) messages: syllables [], tone_score null, tips []. new_vocab: 0–3 useful words from your reply or the correction that the learner probably doesn't know yet.`;
+}
+
+/* ---------- audio: record → 16 kHz WAV + pitch ---------- */
+const AC=window.AudioContext||window.webkitAudioContext;
+class Recorder{
+  constructor(btn,onDone){this.btn=btn;this.onDone=onDone;this.state='idle';btn.addEventListener('click',()=>this.toggle())}
+  async toggle(){
+    unlockAudio();
+    if(this.state==='busy') return;
+    if(this.state==='rec') return this.stop();
+    try{
+      if(!navigator.mediaDevices?.getUserMedia) throw new Error('This browser can\'t access the microphone. Open the page in Safari (iPhone) or Chrome (Android), over https.');
+      this.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      const mime=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg'].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m));
+      this.mr=new MediaRecorder(this.stream,mime?{mimeType:mime}:undefined);
+      this.chunks=[];this.mr.ondataavailable=e=>{if(e.data.size)this.chunks.push(e.data)};
+      this.mr.start();this.t0=Date.now();this.set('rec');
+      speechSynthesis?.cancel();$('#player').pause();
+      this.tick=setInterval(()=>{const s=Math.floor((Date.now()-this.t0)/1000);this.btn.querySelector('.tm').textContent=`0:${String(s).padStart(2,'0')} · tap to stop`;if(s>=30)this.stop()},250);
+    }catch(e){this.cleanup();toast(e.name==='NotAllowedError'?'Microphone blocked — allow mic access for this page in your browser settings.':e.message,4500)}
+  }
+  stop(){
+    if(this.state!=='rec')return;
+    this.set('busy');
+    this.mr.onstop=async()=>{
+      const blob=new Blob(this.chunks,{type:this.mr.mimeType||'audio/webm'});
+      const dur=(Date.now()-this.t0)/1000;this.cleanup();
+      if(dur<0.6){this.set('idle');toast('Too short — tap, speak, then tap again.');return}
+      try{const a=await processAudio(blob);await this.onDone(a)}catch(e){toast(e.message,4500)}
+      this.set('idle');
+    };
+    this.mr.stop();
+  }
+  cleanup(){clearInterval(this.tick);this.stream?.getTracks().forEach(t=>t.stop());this.btn.querySelector('.tm').textContent=''}
+  set(s){this.state=s;this.btn.classList.toggle('rec',s==='rec');this.btn.classList.toggle('busy',s==='busy')}
+}
+async function processAudio(blob){
+  const ab=await blob.arrayBuffer();
+  const ac=new AC();
+  const buf=await new Promise((res,rej)=>{const p=ac.decodeAudioData(ab,res,rej);if(p&&p.then)p.then(res,rej)});
+  try{ac.close()}catch(e){}
+  const sr=16000,len=Math.max(1,Math.ceil(buf.duration*sr));
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  const off=new OAC(1,len,sr);const src=off.createBufferSource();src.buffer=buf;src.connect(off.destination);src.start(0);
+  const out=await new Promise(res=>{off.oncomplete=e=>res(e.renderedBuffer);const p=off.startRendering();if(p&&p.then)p.then(res)});
+  const pcm=out.getChannelData(0);
+  return {b64:wavB64(pcm,sr),pitch:pitchTrack(pcm,sr)};
+}
+function wavB64(x,sr){
+  const n=x.length,b=new ArrayBuffer(44+n*2),v=new DataView(b);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const s=Math.max(-1,Math.min(1,x[i]));v.setInt16(44+i*2,s<0?s*0x8000:s*0x7fff,true)}
+  const u=new Uint8Array(b);let bin='';for(let i=0;i<u.length;i+=0x8000)bin+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));
+  return btoa(bin);
+}
+// Simple autocorrelation pitch tracker → semitones relative to speaker's median
+function pitchTrack(x,sr){
+  const N=640,H=160,minL=Math.floor(sr/420),maxL=Math.floor(sr/70);
+  let peak=0;for(let s=0;s+N<x.length;s+=H){let e=0;for(let i=0;i<N;i++)e+=x[s+i]*x[s+i];peak=Math.max(peak,Math.sqrt(e/N))}
+  const thr=peak*0.12,f=[];
+  for(let s=0;s+N+maxL<x.length;s+=H){
+    let e=0;for(let i=0;i<N;i++)e+=x[s+i]*x[s+i];
+    if(Math.sqrt(e/N)<thr){f.push(null);continue}
+    const r=new Float32Array(maxL+1);let best=0;
+    for(let L=minL;L<=maxL;L++){let c=0,e2=0;for(let i=0;i<N;i++){const y=x[s+i+L];c+=x[s+i]*y;e2+=y*y}r[L]=c/Math.sqrt(e*e2+1e-12);if(r[L]>best)best=r[L]}
+    if(best<0.55){f.push(null);continue}
+    let L=minL;for(;L<maxL;L++){if(r[L]>=0.88*best&&r[L]>=r[L-1]&&r[L]>=r[L+1])break}
+    f.push(sr/L);
+  }
+  // median smooth
+  const sm=f.map((v,i)=>{if(v==null)return null;const w=[f[i-1],v,f[i+1]].filter(a=>a!=null).sort((a,b)=>a-b);return w[Math.floor(w.length/2)]});
+  const vals=sm.filter(v=>v).sort((a,b)=>a-b);if(!vals.length)return [];
+  const med=vals[Math.floor(vals.length/2)];
+  let st=sm.map(v=>v?+(12*Math.log2(v/med)).toFixed(2):null);
+  // trim leading/trailing silence, downsample to ≤140 points
+  while(st.length&&st[0]==null)st.shift();while(st.length&&st[st.length-1]==null)st.pop();
+  if(st.length>140){const k=st.length/140;st=Array.from({length:140},(_,i)=>st[Math.floor(i*k)])}
+  return st;
+}
+function drawPitch(cv,st){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth||280,Hh=64;cv.width=W*dpr;cv.height=Hh*dpr;
+  const g=cv.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,W,Hh);
+  const y=v=>Hh/2-Math.max(-9,Math.min(9,v))*(Hh/2-6)/9;
+  g.strokeStyle='#e0d6c4';g.setLineDash([3,4]);g.beginPath();g.moveTo(0,Hh/2);g.lineTo(W,Hh/2);g.stroke();g.setLineDash([]);
+  if(!st||!st.length){g.fillStyle='#7a7166';g.font='12px sans-serif';g.fillText('no clear pitch detected',8,Hh/2-6);return}
+  g.strokeStyle='#b8322a';g.lineWidth=2.4;g.lineJoin='round';g.lineCap='round';g.beginPath();let pen=false;
+  st.forEach((v,i)=>{const X=4+i*(W-8)/Math.max(1,st.length-1);if(v==null){pen=false;return}pen?g.lineTo(X,y(v)):g.moveTo(X,y(v));pen=true});g.stroke();
+}
+function pitchBlock(st){return `<canvas class="pitch" data-pitch='${JSON.stringify(st||[])}'></canvas><div class="pitchcap"><span>your pitch ↗ high</span><span>↘ low</span></div>`}
+function paintPitches(root){root.querySelectorAll('canvas.pitch:not([data-done])').forEach(c=>{c.dataset.done=1;try{drawPitch(c,JSON.parse(c.dataset.pitch))}catch(e){}})}
+
+/* ---------- speech out ---------- */
+let zhVoice=null,unlocked=false;const ttsCache=new Map();
+function pickVoice(){const vs=speechSynthesis.getVoices();zhVoice=vs.find(v=>/zh[-_]CN/i.test(v.lang)&&/Tingting|Xiaoxiao|Google|Lili|Yu-shu/i.test(v.name))||vs.find(v=>/zh[-_]CN/i.test(v.lang))||vs.find(v=>/^(zh|cmn)/i.test(v.lang))}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function unlockAudio(){if(unlocked)return;unlocked=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(e){}
+  const p=$('#player');p.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';p.play().catch(()=>{})}
+document.addEventListener('pointerdown',unlockAudio,{once:true});
+async function speak(text,rate){
+  rate=rate||S.rate;if(!text)return;
+  if(S.cloud&&S.key){
+    try{
+      const k=text+'|'+rate+'|'+S.voice;let b64=ttsCache.get(k);
+      if(!b64){const r=await fetch('https://texttospeech.googleapis.com/v1/text:synthesize',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.key.trim()},
+        body:JSON.stringify({input:{text},voice:{languageCode:'cmn-CN',name:S.voice},audioConfig:{audioEncoding:'MP3',speakingRate:rate}})});
+        const d=await r.json();if(!r.ok)throw new Error(d?.error?.message||r.status);b64=d.audioContent;ttsCache.set(k,b64)}
+      const p=$('#player');p.src='data:audio/mp3;base64,'+b64;await p.play();return;
+    }catch(e){toast('Cloud voice unavailable — using phone voice. ('+String(e.message).slice(0,80)+')',4000)}
+  }
+  if(!('speechSynthesis' in window))return toast('No speech voice available in this browser.');
+  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';if(zhVoice)u.voice=zhVoice;u.rate=rate;speechSynthesis.speak(u);
+}
+
+/* ---------- learning memory ---------- */
+function addVocab(list){(list||[]).forEach(w=>{if(!w||!w.hanzi)return;const o=S.vocab[w.hanzi];
+  S.vocab[w.hanzi]={pinyin:w.pinyin||o?.pinyin||'',english:w.english||o?.english||'',added:o?.added||Date.now(),seen:(o?.seen||0)+1}});save('vocab')}
+function logTones(syls){(syls||[]).forEach(s=>{if(s&&s.ok===false&&s.expected){const k=(s.hanzi||'')+' '+s.expected;S.toneErr[k]=(S.toneErr[k]||0)+1}});save('toneErr')}
+function topToneErr(n){return Object.entries(S.toneErr).sort((a,b)=>b[1]-a[1]).slice(0,n)}
+
+/* ---------- rendering ---------- */
+function sylGrid(syls){
+  if(!syls||!syls.length)return '';
+  return `<div class="syls">${syls.map(s=>{const t=toneOf(s.expected||'');return `<div class="syl ${s.ok===false?'bad':''}"><div class="c">${esc(s.hanzi)}</div><div class="p t${t}">${esc(s.expected)}</div>${toneSvg(t)}${s.ok===false&&s.heard?`<div class="h">${esc(s.heard)}</div>`:''}</div>`}).join('')}</div>`;
+}
+function scoreBadge(n){if(n==null||n==='')return '';n=Math.round(+n);const c=n>=85?'hi':n>=65?'mid':'lo';return `<span class="score ${c}">Tones ${n}%</span>`}
+function feedbackHTML(r,pitch){
+  let h='';
+  if(r.syllables&&r.syllables.length){h+=`<div class="row" style="margin-top:6px">${scoreBadge(r.tone_score)}<span class="note">red = tone to fix (yours crossed out)</span></div>`+sylGrid(r.syllables)}
+  if(pitch)h+=pitchBlock(pitch);
+  if(r.better_hanzi)h+=`<div class="better"><div class="label" style="margin:0 0 2px">Better</div><div class="hz">${esc(r.better_hanzi)}</div><div class="py">${colorPy(r.better_pinyin||'')}</div><div class="row" style="margin-top:4px"><button class="mini" data-say="${esc(r.better_hanzi)}">🔊 Hear it</button></div></div>`;
+  const tips=(r.tips||[]).filter(Boolean);if(tips.length)h+=`<ul class="tips">${tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`;
+  if(r.grammar)h+=`<div class="note" style="margin-top:6px">📝 ${esc(r.grammar)}</div>`;
+  return h;
+}
+function msgHTML(m){
+  if(m.role==='me'){
+    return `<div class="msg me">${m.hz?`<div class="hz">${esc(m.hz)}</div>`:''}${m.py?`<div class="py toggle">${colorPy(m.py)}</div>`:''}${m.typed?`<div class="note">typed</div>`:''}${m.fb||''}</div>`;
+  }
+  if(m.role==='err')return `<div class="msg tutor" style="border-color:var(--seal)"><div class="note" style="color:var(--seal)">⚠️ ${esc(m.text)}</div></div>`;
+  const nv=(m.vocab||[]).filter(w=>w.hanzi);
+  return `<div class="msg tutor"><div class="hz">${esc(m.hz)}</div><div class="py toggle">${colorPy(m.py||'')}</div><div class="en toggle">${esc(m.en||'')}</div>
+  <div class="row"><button class="mini" data-say="${esc(m.hz)}">🔊</button><button class="mini" data-say="${esc(m.hz)}" data-rate="0.6">🐢</button>
+  ${nv.map(w=>`<span class="mini zh" title="${esc(w.english)}">＋${esc(w.hanzi)} <span class="t${toneOf(w.pinyin)}" style="font-family:var(--ui)">${esc(w.pinyin)}</span></span>`).join('')}</div></div>`;
+}
+function renderChat(){
+  const c=$('#chat');
+  if(!S.msgs.length){
+    const sc=SCEN.find(s=>s[0]===S.scenario)||SCEN[0];
+    c.innerHTML=`<div class="empty"><div class="big">你好！</div><p>Scenario: <b>${esc(sc[1])}</b> · HSK ${S.level==='7'?'7–9':S.level}<br>Tap the red mic, speak Chinese, tap again to send. Or let the tutor start.</p><button class="btn red" id="startBtn">Start conversation</button></div>`;
+    $('#startBtn').onclick=()=>{unlockAudio();turn({start:true})};return;
+  }
+  c.innerHTML=S.msgs.map(msgHTML).join('');paintPitches(c);c.scrollTop=c.scrollHeight;
+}
+function applyToggles(){document.body.classList.toggle('hide-py',!S.showPy);document.body.classList.toggle('hide-en',!S.showEn)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-say]');if(b){unlockAudio();speak(b.dataset.say,b.dataset.rate?+b.dataset.rate:undefined)}});
+
+/* ---------- talk turn ---------- */
+let busy=false;
+async function turn({audio,text,start}){
+  if(busy)return;busy=true;
+  const chat=$('#chat');
+  if(!S.msgs.length)chat.innerHTML='';
+  if(text){S.msgs.push({role:'me',hz:text,typed:true});}
+  if(text)chat.insertAdjacentHTML('beforeend',msgHTML(S.msgs[S.msgs.length-1]));
+  chat.insertAdjacentHTML('beforeend','<div class="msg tutor" id="pending"><div class="typing"><span></span><span></span><span></span></div></div>');chat.scrollTop=chat.scrollHeight;
+  const parts=[];
+  if(start)parts.push({text:'(The learner just opened the app. Greet them and open the scenario with one short line and a question. heard fields empty, syllables [].)'});
+  else if(audio){parts.push({inlineData:{mimeType:'audio/wav',data:audio.b64}});parts.push({text:'(Learner spoke — audio attached. Judge tones from the audio and reply with the JSON.)'})}
+  else parts.push({text:'(Learner typed): '+text});
+  const contents=[...S.history.slice(-16).map(h=>({role:h.role,parts:[{text:h.text}]})),{role:'user',parts}];
+  try{
+    const r=await gemini({system:talkSystem(),contents});
+    $('#pending')?.remove();
+    if(audio){
+      const m={role:'me',hz:r.heard_hanzi||'(couldn\'t make that out)',py:r.heard_pinyin,fb:feedbackHTML(r,audio.pitch)};
+      S.msgs.push(m);chat.insertAdjacentHTML('beforeend',msgHTML(m));logTones(r.syllables);
+    }else if(text&&(r.better_hanzi||r.grammar)){
+      const last=S.msgs[S.msgs.length-1];last.fb=feedbackHTML(r);renderChat();
+    }
+    const tm={role:'tutor',hz:r.reply_hanzi||'',py:r.reply_pinyin||'',en:r.reply_english||'',vocab:r.new_vocab||[]};
+    S.msgs.push(tm);chat.insertAdjacentHTML('beforeend',msgHTML(tm));paintPitches(chat);chat.scrollTop=chat.scrollHeight;
+    addVocab(r.new_vocab);
+    S.history.push({role:'user',text:start?'(start)':audio?`[spoke] ${r.heard_hanzi||''}`:text});
+    S.history.push({role:'model',text:r.reply_hanzi||''});
+    if(S.history.length>40)S.history=S.history.slice(-40);
+    if(S.msgs.length>80)S.msgs=S.msgs.slice(-80);
+    save('msgs','history');
+    if(S.auto&&tm.hz)speak(tm.hz);
+  }catch(e){$('#pending')?.remove();chat.insertAdjacentHTML('beforeend',msgHTML({role:'err',text:e.message}));chat.scrollTop=chat.scrollHeight}
+  busy=false;
+}
+new Recorder($('#micTalk'),async a=>{await turn({audio:a})});
+function sendText(){const t=$('#textIn').value.trim();if(!t)return;$('#textIn').value='';unlockAudio();turn({text:t})}
+$('#sendBtn').onclick=sendText;$('#textIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendText()});
+
+/* ---------- drill ---------- */
+let drill=null;
+async function newDrill(weak){
+  const btns=[$('#newDrill'),$('#weakDrill')];btns.forEach(b=>b.disabled=true);
+  $('#drillCard').style.display='block';$('#dHz').innerHTML='<div class="typing"><span></span><span></span><span></span></div>';$('#dPy').textContent='';$('#dEn').textContent='';$('#dFocus').textContent='';$('#dResult').innerHTML='';
+  const weakList=topToneErr(10).map(([k])=>k).join(', ');
+  const words=Object.keys(S.vocab).slice(-30).join('、');
+  const prompt=weak&&(weakList||words)
+    ?`Make ONE short sentence for tone practice at ${LEVELS[S.level]} It MUST reuse some of these troublesome syllables/words: ${weakList||'(none)'} ; learner's words: ${words||'(none)'}.`
+    :`Make ONE natural, useful short sentence for tone practice at ${LEVELS[S.level]} Mix all four tones${weakList?`, and include at least one of these syllables the learner often gets wrong: ${weakList}`:''}. Pick a random everyday topic (seed ${Math.floor(Math.random()*1e6)}).`;
+  try{
+    drill=await gemini({contents:[{role:'user',parts:[{text:prompt+`\nReturn ONLY JSON: {"hanzi":"","pinyin":"tone-marked, with sandhi NOT applied (dictionary tones), words space-separated","english":"","focus":"one short English line on which tone pattern/sandhi to watch"}`}]}],temp:1});
+    $('#dHz').textContent=drill.hanzi;$('#dPy').innerHTML=colorPy(drill.pinyin);$('#dEn').textContent=drill.english;$('#dFocus').textContent='🎯 '+(drill.focus||'');
+    speak(drill.hanzi);
+  }catch(e){$('#dHz').innerHTML=`<div class="note" style="color:var(--seal)">⚠️ ${esc(e.message)}</div>`}
+  btns.forEach(b=>b.disabled=false);
+}
+$('#newDrill').onclick=()=>{unlockAudio();newDrill(false)};$('#weakDrill').onclick=()=>{unlockAudio();newDrill(true)};
+$('#dPlay').onclick=()=>drill&&speak(drill.hanzi);$('#dSlow').onclick=()=>drill&&speak(drill.hanzi,0.55);
+new Recorder($('#micDrill'),async a=>{
+  if(!drill)return toast('Get a sentence first.');
+  $('#dResult').innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  try{
+    const r=await gemini({system:`You are a strict but kind Mandarin pronunciation coach. ${TONE_RULES}`,contents:[{role:'user',parts:[
+      {inlineData:{mimeType:'audio/wav',data:a.b64}},
+      {text:`The learner tried to say: ${drill.hanzi} (${drill.pinyin}). Grade their tones from the audio.\nReturn ONLY JSON: {"heard_hanzi":"","heard_pinyin":"as they pronounced it","syllables":[{"hanzi":"","expected":"surface tone after sandhi","heard":"what they produced","ok":true}],"tone_score":0-100,"tips":["max 3 short concrete English tips, e.g. 'Start 好 lower and let it dip'"],"better_hanzi":"","grammar":""}\nsyllables must cover EVERY character of the target sentence in order (skip punctuation).`}]}],temp:0.3});
+    r.better_hanzi='';logTones(r.syllables);
+    $('#dResult').innerHTML=`<div class="label">You said</div><div class="hz zh" style="font-size:20px">${esc(r.heard_hanzi||'—')}</div><div class="py">${colorPy(r.heard_pinyin||'')}</div>`+feedbackHTML(r,a.pitch)+`<div class="row"><button class="btn ghost" id="again">Try again</button><button class="btn" id="next">Next</button></div>`;
+    paintPitches($('#dResult'));$('#again').onclick=()=>$('#micDrill').click();$('#next').onclick=()=>newDrill(false);
+  }catch(e){$('#dResult').innerHTML=`<div class="note" style="color:var(--seal)">⚠️ ${esc(e.message)}</div>`}
+});
+
+/* ---------- words view ---------- */
+function renderWords(){
+  const te=topToneErr(16);
+  $('#toneErrs').innerHTML=te.length?te.map(([k,n])=>{const [h,p]=k.split(' ');return `<span data-say="${esc(h)}"><span class="zh">${esc(h)}</span> <span class="t${toneOf(p||'')}">${esc(p||'')}</span><small>×${n}</small></span>`}).join(''):'<span class="note" style="border:none;background:none;padding:0">Nothing yet — speak a few times first.</span>';
+  const ws=Object.entries(S.vocab).sort((a,b)=>b[1].added-a[1].added);
+  $('#wCount').textContent=ws.length?`(${ws.length})`:'';
+  $('#wlist').innerHTML=ws.length?ws.map(([h,v])=>`<div class="w"><div class="hz">${esc(h)}</div><div class="meta"><div class="py">${colorPy(v.pinyin)}</div><div class="en">${esc(v.english)}</div></div><button class="mini" data-say="${esc(h)}">🔊</button><button class="x" data-del="${esc(h)}" aria-label="Remove">×</button></div>`).join(''):'<p class="note">No words yet. Have a conversation and new words will collect here.</p>';
+  $('#memList').innerHTML=S.memory.length?S.memory.slice().reverse().map(m=>`<p style="margin:0 0 8px"><b>${new Date(m.at).toLocaleDateString()}</b> — ${esc(m.text)}</p>`).join(''):'Nothing saved yet.';
+}
+$('#wlist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d){delete S.vocab[d.dataset.del];save('vocab');renderWords()}});
+
+/* ---------- settings ---------- */
+function loadSettings(){
+  $('#keyIn').value=S.key;$('#modelIn').value=S.model;$('#rateIn').value=S.rate;$('#rateVal').textContent=S.rate+'×';
+  $('#autoIn').checked=S.auto;$('#pyIn').checked=S.showPy;$('#enIn').checked=S.showEn;$('#cloudIn').checked=S.cloud;$('#voiceIn').value=S.voice;
+  $('#voiceField').style.display=S.cloud?'block':'none';
+}
+$('#saveKey').onclick=()=>{S.key=$('#keyIn').value.trim();S.model=$('#modelIn').value.trim()||'gemini-3.8-flash';save('key','model');toast('Saved ✓')};
+$('#testKey').onclick=async()=>{S.key=$('#keyIn').value.trim();S.model=$('#modelIn').value.trim()||S.model;save('key','model');
+  try{const t=await gemini({contents:[{role:'user',parts:[{text:'Reply with just: 你好！'}]}],json:false,temp:0});toast('Working ✓ Gemini says: '+t.trim().slice(0,30))}catch(e){toast('✗ '+e.message,5000)}};
+$('#rateIn').oninput=e=>{S.rate=+e.target.value;$('#rateVal').textContent=S.rate+'×';save('rate')};
+$('#autoIn').onchange=e=>{S.auto=e.target.checked;save('auto')};
+$('#pyIn').onchange=e=>{S.showPy=e.target.checked;save('showPy');applyToggles()};
+$('#enIn').onchange=e=>{S.showEn=e.target.checked;save('showEn');applyToggles()};
+$('#cloudIn').onchange=e=>{S.cloud=e.target.checked;save('cloud');$('#voiceField').style.display=S.cloud?'block':'none'};
+$('#voiceIn').onchange=e=>{S.voice=e.target.value.trim()||'cmn-CN-Wavenet-A';save('voice');ttsCache.clear()};
+$('#endSess').onclick=async()=>{
+  if(S.history.length<2){toast('Nothing to save yet.');return}
+  const b=$('#endSess');b.disabled=true;b.textContent='Saving…';
+  try{
+    const transcript=S.history.map(h=>(h.role==='user'?'Learner: ':'Tutor: ')+h.text).join('\n');
+    const errs=topToneErr(6).map(([k,n])=>k+'×'+n).join(', ');
+    const t=await gemini({contents:[{role:'user',parts:[{text:`Summarise this Mandarin practice session in ONE or TWO short English sentences for the tutor's notes: topic, what the learner handled well, what to review next time (words/grammar/tones). Level HSK ${S.level}. Frequent tone errors so far: ${errs||'n/a'}.\n\n${transcript}`}]}],json:false,temp:0.3});
+    S.memory.push({at:Date.now(),text:t.trim().slice(0,400)});if(S.memory.length>12)S.memory=S.memory.slice(-12);
+    S.history=[];S.msgs=[];save('memory','history','msgs');renderChat();toast('Session saved — the tutor will remember it ✓');go('talk');
+  }catch(e){toast('✗ '+e.message,5000)}
+  b.disabled=false;b.textContent='End & save session';
+};
+$('#clearChat').onclick=()=>{S.history=[];S.msgs=[];save('history','msgs');renderChat();toast('Chat cleared')};
+$('#resetAll').onclick=()=>{if(!confirm('Erase your key, words, tone history and saved sessions on this device?'))return;Object.keys(localStorage).filter(k=>k.startsWith(P)).forEach(k=>localStorage.removeItem(k));location.reload()};
+
+/* ---------- nav, level, scenarios ---------- */
+function go(v){document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='words')renderWords();if(v==='settings')loadSettings();if(v==='talk')renderChat()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+$('#levelSel').value=S.level;$('#levelSel').onchange=e=>{S.level=e.target.value;save('level');toast(`Level set to HSK ${S.level==='7'?'7–9':S.level}`);if(!S.msgs.length)renderChat()};
+$('#scenarios').innerHTML=SCEN.map(s=>`<button class="chip ${s[0]===S.scenario?'on':''}" data-s="${s[0]}">${s[1]}</button>`).join('');
+$('#scenarios').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;S.scenario=c.dataset.s;save('scenario');
+  document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));
+  if(S.msgs.length){S.history.push({role:'user',text:`(Switch scenario: ${SCEN.find(s=>s[0]===S.scenario)[2]})`},{role:'model',text:'好的！'});save('history');toast('Scenario switched — just keep talking')}else renderChat()});
+
+applyToggles();renderChat();
+if(!S.key)setTimeout(()=>toast('Welcome! Add your Gemini API key in Settings to begin.',4000),400);
+</script>
+</body>
+</html>
